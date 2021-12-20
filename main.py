@@ -32,9 +32,8 @@ def get_members(groupid):
     # и еще тысяча id'шников добавляется к нашему списку.
     for i in range(1, count+1):
         data = data + vk_api.groups.getMembers(group_id=groupid, v=5.92, offset=i*1000)["items"]
-        print(data)
-        time.sleep(0.15)
-    dbinput(data)
+        time.sleep(0.3)
+    return data
 
 
 def save_data(data, filename="data.txt"):  # Функция сохранения базы в txt файле
@@ -75,10 +74,10 @@ def union_members(group1, group2):
 if __name__ == "__main__":
     token = config.TOKEN
     session = vk.Session(access_token=token)
-    vk_api = vk.API(session, v = 5.81)
+    vk_api = vk.API(session, v = 5.92)
     #bobfilm = get_members("overheard_in_yaroslavl")
-    #hdkinomania = get_members("massage_malinina")
+    #hdkinomania = get_members("yar_live")
     #get_intersection(bobfilm, hdkinomania)
     #union = union_members(bobfilm, hdkinomania)
     #save_data(union)
-    print(vk_api.users.get(user_id=295872229))
+    print(vk_api.group_search)
