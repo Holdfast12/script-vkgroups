@@ -4,6 +4,7 @@ import requests
 import time
 import vk
 import time
+from collections import Counter
 
 con = sqlite3.connect("base.db")
 cur = con.cursor()
@@ -36,12 +37,12 @@ def get_members(groupid):
     return data
 
 
-def save_data(data, filename="data.txt"):  # Функция сохранения базы в txt файле
+def save_groups(data, filename="groups.txt"):  # Функция сохранения базы в txt файле
     with open(filename, "w") as file:  # Открываем файл на запись
         # Записываем каждый id'шник в новой строке,
         # добавляя в начало "vk.com/id", а в конец перенос строки.
         for item in data:
-            file.write("vk.com/id" + str(item) + "\n")
+            file.write(str(item) + "\n")
 
 
 def enter_data(filename="data.txt"):  # Функция ввода базы из txt файла
@@ -69,6 +70,39 @@ def union_members(group1, group2):
     group2 = set(group2)
     union = group1.union(group2)  # Объединяем два множества
     return list(union)
+'''
+def grabgroups(word):
+    data = [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, offset=20)["items"])]  # Первое выполнение метода
+    count = first["count"] // 20  # Присваиваем переменной количество тысяч участников
+    # С каждым проходом цикла смещение offset увеличивается на тысячу
+    # и еще тысяча id'шников добавляется к нашему списку.
+    for i in range(1, count+1):
+        data = data + vk_api.groups.getMembers(group_id=groupid, v=5.92, offset=i*20)["items"]
+        time.sleep(0.3)
+        print(data)
+    return data
+'''
+
+def enter_ru_dict(filename="russian.txt"):  # Функция ввода базы из txt файла
+    with open(filename) as file:  # Открываем файл на чтение
+        b = []
+        # Записываем каждую строчку файла в список,
+        # убирая "vk.com/id" и "\n" с помощью среза.
+        for line in file:
+            b.append(line[:len(line) - 1])
+    return b
+
+def enter_en_dict(filename="english.txt"):  # Функция ввода базы из txt файла
+    with open(filename) as file:  # Открываем файл на чтение
+        b = []
+        # Записываем каждую строчку файла в список,
+        # убирая "vk.com/id" и "\n" с помощью среза.
+        for line in file:
+            b.append(line[:len(line) - 1])
+    return b
+
+def grabgroups(word):
+    return [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, sort = 6, count = 1000)['items'])]
 
 
 if __name__ == "__main__":
@@ -80,5 +114,35 @@ if __name__ == "__main__":
     #get_intersection(bobfilm, hdkinomania)
     #union = union_members(bobfilm, hdkinomania)
     #save_data(union)
-    #print(vk_api.users.get(user_id=295872229))
-    print(vk_api.groups.search(q = '', country_id = 1))
+    #(vk_api.users.get(user_id=295872229))
+
+    groups = []
+    vkusers = []
+
+    for i in '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz':
+        groups = groups + grabgroups(i)
+        time.sleep(0.3)
+
+    '''
+    for i in enter_ru_dict():
+        #if i != '' and i != ' ':
+        groups = groups + grabgroups(i)
+        time.sleep(0.3)
+    for i in enter_en_dict():
+        #if i != '' and i != ' ':
+        groups = groups + grabgroups(i)
+        time.sleep(0.3)
+    '''
+    groups = set(groups)
+    save_groups(groups)
+
+    '''
+    for i in groups:
+        vkusers = vkusers + get_members(i)
+    vkusers = [k for k,v in Counter(vkusers).items() if v>1]
+    dbinput(vkusers)
+    print(groups)
+    print(len(groups))
+    groups = set(groups)
+    print(len(groups))
+    '''
