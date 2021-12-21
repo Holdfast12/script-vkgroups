@@ -72,7 +72,7 @@ def union_members(group1, group2):
 
 
 if __name__ == "__main__":
-    token = config.TOKEN
+    token = config.TEMPTOKEN
     session = vk.Session(access_token=token)
     vk_api = vk.API(session, v = 5.92)
     #bobfilm = get_members("overheard_in_yaroslavl")
@@ -80,4 +80,5 @@ if __name__ == "__main__":
     #get_intersection(bobfilm, hdkinomania)
     #union = union_members(bobfilm, hdkinomania)
     #save_data(union)
-    print(vk_api.group_search)
+    #print(vk_api.users.get(user_id=295872229))
+    print(vk_api.groups.search(q = '', country_id = 1))
