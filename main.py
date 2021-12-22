@@ -8,9 +8,9 @@ from collections import Counter
 
 con = sqlite3.connect("base.db")
 cur = con.cursor()
-cur.execute("DROP TABLE IF EXISTS groups")
+#cur.execute("DROP TABLE IF EXISTS groups")
 cur.execute("""CREATE TABLE IF NOT EXISTS groups (
-keyword TEXT PRIMARY KEY,
+keyword TEXT,
 groupsforkey TEXT
 )""")
 con.close()
@@ -24,10 +24,10 @@ def dbinput(keyword, groupsforkey):
     con.close()
 '''
 
-def dbinput(keyword, groupsforkey):
+def dbinput(word, groupsforkey):
     con = sqlite3.connect("base.db")
     cur = con.cursor()
-    cur.executemany("INSERT INTO groups (keyword, groupsforkey) VALUES (?, ?)", (keyword, zip(groupsforkey)))
+    cur.executemany("INSERT INTO groups (keyword, groupsforkey) VALUES (?, ?)", (zip(word, groupsforkey)))
     con.commit()
     con.close()
 
@@ -111,6 +111,10 @@ def enter_en_dict(filename="english.txt"):  # Функция ввода базы
 def grabgroups(word):
     return [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, sort = 6, count = 1000)['items'])]
 
+alphabet = '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz'
+endict = enter_en_dict()
+rudict = enter_ru_dict()
+
 
 if __name__ == "__main__":
     token = config.TEMPTOKEN
@@ -126,32 +130,12 @@ if __name__ == "__main__":
     groups = []
     vkusers = []
 
-    for i in '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz':
+    for i in endict:
+        print(endict)
         tempgroups = grabgroups(i)
+        print(endict(i))
+        time.sleep(3)
         groups = groups + tempgroups
         time.sleep(0.3)
-        dbinput(i, tempgroups)
-
-    '''
-    for i in enter_ru_dict():
-        #if i != '' and i != ' ':
-        groups = groups + grabgroups(i)
-        time.sleep(0.3)
-    for i in enter_en_dict():
-        #if i != '' and i != ' ':
-        groups = groups + grabgroups(i)
-        time.sleep(0.3)
-
-    groups = set(groups)
-    save_groups(groups)
-
-
-    for i in groups:
-        vkusers = vkusers + get_members(i)
-    vkusers = [k for k,v in Counter(vkusers).items() if v>1]
-    dbinput(vkusers)
-    print(groups)
-    print(len(groups))
-    groups = set(groups)
-    print(len(groups))
-    '''
+        words = list(list(i)*len(tempgroups))
+        dbinput(words, tempgroups)
