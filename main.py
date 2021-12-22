@@ -8,7 +8,7 @@ from collections import Counter
 
 con = sqlite3.connect("base.db")
 cur = con.cursor()
-#cur.execute("DROP TABLE IF EXISTS groups")
+cur.execute("DROP TABLE IF EXISTS groups")
 cur.execute("""CREATE TABLE IF NOT EXISTS groups (
 keyword TEXT,
 groupsforkey TEXT
@@ -130,12 +130,11 @@ if __name__ == "__main__":
     groups = []
     vkusers = []
 
-    for i in endict:
-        print(endict)
+    for i in alphabet:
         tempgroups = grabgroups(i)
-        print(endict(i))
-        time.sleep(3)
-        groups = groups + tempgroups
+        print(endict)
         time.sleep(0.3)
-        words = list(list(i)*len(tempgroups))
+        words = list(i*len(tempgroups))
+        print(words)
+        time.sleep(3)
         dbinput(words, tempgroups)
