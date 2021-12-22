@@ -8,22 +8,29 @@ from collections import Counter
 
 con = sqlite3.connect("base.db")
 cur = con.cursor()
-cur.execute("DROP TABLE IF EXISTS clients")
-cur.execute("""CREATE TABLE IF NOT EXISTS clients (
-vkid INTEGER PRIMARY KEY,
-inyaroslavl INTEGER,
-ingroup INTEGER,
-infriends INTEGER,
-inmessages INTEGER
+cur.execute("DROP TABLE IF EXISTS groups")
+cur.execute("""CREATE TABLE IF NOT EXISTS groups (
+keyword TEXT PRIMARY KEY,
+groupsforkey TEXT
 )""")
 con.close()
 
-def dbinput(userid):
+'''
+def dbinput(keyword, groupsforkey):
     con = sqlite3.connect("base.db")
     cur = con.cursor()
-    cur.executemany("INSERT INTO clients (vkid) VALUES (?)", zip(userid))
+    cur.executemany("INSERT INTO groups (keyword, groupsforkey) VALUES (?, ?)", zip(keyword, groupsforkey))
     con.commit()
     con.close()
+'''
+
+def dbinput(keyword, groupsforkey):
+    con = sqlite3.connect("base.db")
+    cur = con.cursor()
+    cur.executemany("INSERT INTO groups (keyword, groupsforkey) VALUES (?, ?)", (keyword, zip(groupsforkey)))
+    con.commit()
+    con.close()
+
 
 def get_members(groupid):
     first = vk_api.groups.getMembers(group_id=groupid, v=5.92)  # Первое выполнение метода
@@ -120,8 +127,10 @@ if __name__ == "__main__":
     vkusers = []
 
     for i in '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz':
-        groups = groups + grabgroups(i)
+        tempgroups = grabgroups(i)
+        groups = groups + tempgroups
         time.sleep(0.3)
+        dbinput(i, tempgroups)
 
     '''
     for i in enter_ru_dict():
@@ -132,11 +141,11 @@ if __name__ == "__main__":
         #if i != '' and i != ' ':
         groups = groups + grabgroups(i)
         time.sleep(0.3)
-    '''
+
     groups = set(groups)
     save_groups(groups)
 
-    '''
+
     for i in groups:
         vkusers = vkusers + get_members(i)
     vkusers = [k for k,v in Counter(vkusers).items() if v>1]
