@@ -130,11 +130,12 @@ if __name__ == "__main__":
     groups = []
     vkusers = []
 
-    for i in alphabet:
-        tempgroups = grabgroups(i)
-        print(endict)
-        time.sleep(0.3)
-        words = list(i*len(tempgroups))
-        print(words)
-        time.sleep(3)
-        dbinput(words, tempgroups)
+    for i in endict:
+        try:
+            tempgroups = grabgroups(i)
+            groups = groups + tempgroups
+            time.sleep(0.3)
+            words = list([i])*len(tempgroups)
+            dbinput(words, tempgroups)
+        except:
+            continue
