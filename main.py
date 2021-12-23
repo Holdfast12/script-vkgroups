@@ -130,6 +130,7 @@ if __name__ == "__main__":
     groups = []
     vkusers = []
 
+
     for i in endict:
         try:
             tempgroups = grabgroups(i)
@@ -138,4 +139,12 @@ if __name__ == "__main__":
             words = list([i])*len(tempgroups)
             dbinput(words, tempgroups)
         except:
+            while True:
+                try:
+                    grabgroups(i)
+                    time.sleep(10)
+                except:
+                    print('Была ошибка на слове ' + i)
+                else:
+                    break
             continue
