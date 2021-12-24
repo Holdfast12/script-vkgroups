@@ -110,7 +110,7 @@ def enter_en_dict(filename="english.txt"):  # Функция ввода базы
 
 #возвращает группы, найденные по ключевому слову word
 def grabgroups(word):
-    return [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, sort = 6, type = 'group', deactivated = 'None', count = 1000)['items'])]
+    return [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, sort = 6, type = 'group', deactivated = None, count = 1000)['items'])]
 
 alphabet = '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz'
 endict = enter_en_dict()
