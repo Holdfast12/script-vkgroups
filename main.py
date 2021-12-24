@@ -108,6 +108,7 @@ def enter_en_dict(filename="english.txt"):  # Функция ввода базы
             b.append(line[:len(line) - 1])
     return b
 
+#возвращает группы, найденные по ключевому слову word
 def grabgroups(word):
     return [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, sort = 6, count = 1000)['items'])]
 
@@ -115,11 +116,10 @@ alphabet = '123456789абвгдеёжзийклмнопрстуфхцчшщъы�
 endict = enter_en_dict()
 rudict = enter_ru_dict()
 
-
 if __name__ == "__main__":
     token = config.TEMPTOKEN
     session = vk.Session(access_token=token)
-    vk_api = vk.API(session, v = 5.92)
+    vk_api = vk.API(session, v=5.92)
     #bobfilm = get_members("overheard_in_yaroslavl")
     #hdkinomania = get_members("yar_live")
     #get_intersection(bobfilm, hdkinomania)
@@ -133,18 +133,19 @@ if __name__ == "__main__":
 
     for i in endict:
         try:
-            tempgroups = grabgroups(i)
-            groups = groups + tempgroups
             time.sleep(0.3)
-            words = list([i])*len(tempgroups)
-            dbinput(words, tempgroups)
+            tempgroups = grabgroups(i)
         except:
             while True:
                 try:
-                    grabgroups(i)
+                    time.sleep(0.3)
+                    tempgroups = grabgroups(i)
+                except Exception as e:
+                    print('Была ошибка на слове ' + i + 'по причине: '+ str(e))
                     time.sleep(10)
-                except:
-                    print('Была ошибка на слове ' + i)
                 else:
                     break
-            continue
+        finally:
+            groups = groups + tempgroups
+            words = list([i]) * len(tempgroups)
+            dbinput(words, tempgroups)
