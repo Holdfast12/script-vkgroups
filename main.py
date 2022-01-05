@@ -4,14 +4,36 @@ import requests
 import time
 import vk
 import time
+import math
 from collections import Counter
 
-con = sqlite3.connect("base.db")
+con = sqlite3.connect("hardbase.db")
 cur = con.cursor()
-cur.execute("DROP TABLE IF EXISTS groups")
+#cur.execute("DROP TABLE IF EXISTS groups")
 cur.execute("""CREATE TABLE IF NOT EXISTS groups (
 keyword TEXT,
 groupsforkey TEXT
+)""")
+con.close()
+
+con = sqlite3.connect("base.db")
+cur = con.cursor()
+#cur.execute("DROP TABLE IF EXISTS groups")
+cur.execute("""CREATE TABLE IF NOT EXISTS groups (
+group_id TEXT PRIMARY KEY,
+members_count INTEGER,
+can_post INTEGER,
+activity TEXT,
+status TEXT,
+verified INTEGER,
+is_closed INTEGER,
+type TEXT,
+can_create_topic INTEGER,
+can_message INTEGER,
+can_upload_doc INTEGER,
+can_upload_video INTEGER,
+has_photo INTEGER,
+wall INTEGER
 )""")
 con.close()
 
@@ -25,22 +47,36 @@ def dbinput(keyword, groupsforkey):
 '''
 
 def dbinput(word, groupsforkey):
-    con = sqlite3.connect("base.db")
+    con = sqlite3.connect("hardbase.db")
     cur = con.cursor()
     cur.executemany("INSERT INTO groups (keyword, groupsforkey) VALUES (?, ?)", (zip(word, groupsforkey)))
     con.commit()
     con.close()
 
+def dbselectunical():
+    con = sqlite3.connect("base.db")
+    cur = con.cursor()
+    cur.execute("SELECT group_id FROM groups")
+    groups.extend(cur.fetchall())
+    con.close()
+
+def dbinsertunical(idgroups):
+    con = sqlite3.connect("base.db")
+    cur = con.cursor()
+    cur.executemany("INSERT INTO groups (group_id) VALUES (?)", (idgroups))
+    con.commit()
+    con.close()
+
 
 def get_members(groupid):
-    first = vk_api.groups.getMembers(group_id=groupid, v=5.92)  # Первое выполнение метода
+    first = vk_api.groups.getMembers(group_id=groupid, fields='city', v=5.92)  # Первое выполнение метода
     data = first["items"]  # Присваиваем переменной первую тысячу id'шников
     count = first["count"] // 1000  # Присваиваем переменной количество тысяч участников
     # С каждым проходом цикла смещение offset увеличивается на тысячу
     # и еще тысяча id'шников добавляется к нашему списку.
     for i in range(1, count+1):
-        data = data + vk_api.groups.getMembers(group_id=groupid, v=5.92, offset=i*1000)["items"]
-        time.sleep(0.3)
+        data = data + vk_api.groups.getMembers(group_id=groupid, v=5.92, fields='city', offset=i*1000)["items"]
+        time.sleep(0.4)
     return data
 
 
@@ -112,6 +148,35 @@ def enter_en_dict(filename="english.txt"):  # Функция ввода базы
 def grabgroups(word):
     return [x['screen_name'] for x in (vk_api.groups.search(city_id = 169, q = word, sort = 6, type = 'group', deactivated = None, count = 1000)['items'])]
 
+def getaboutgroups(allgroups):
+    tgroups = []
+    tallgoups = allgroups
+    print(len(tallgoups))
+    for i in range(math.ceil((len(allgroups) / 500))):
+        #for k in range((i+1)*500 - 500 : (i+1)*500):
+        range1 = ((i+1)*500 - 500)
+        range2 = ((i+1)*500)
+        tgroups.append(tallgoups[range1:range2])
+    return tgroups
+
+
+def dbinputaboutgroups(word, groupsforkey):
+    con = sqlite3.connect("base.db")
+    cur = con.cursor()
+    cur.executemany("INSERT INTO groups (keyword, groupsforkey) VALUES (?, ?)", (zip(word, groupsforkey)))
+    con.commit()
+    con.close()
+
+def trashchecking(groupforcheckingtrash):
+    trashcounter = 0
+    for i in range(len(groupforcheckingtrash)):
+        try:
+            if groupforcheckingtrash[i]['deactivated'] == 'banned':
+                trashcounter += 1
+        except:
+            pass
+    return trashcounter
+
 alphabet = '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz'
 endict = enter_en_dict()
 rudict = enter_ru_dict()
@@ -129,9 +194,57 @@ if __name__ == "__main__":
 
     groups = []
     vkusers = []
+    groupswithouttuples = []
 
 
-    for i in endict:
+    dbselectunical()
+    groupswithouttuples = [x[0] for x in groups]
+    dividedlists = getaboutgroups(groupswithouttuples)
+    membersofgroup = get_members('whitehousewot')
+    for i in range(len(groupswithouttuples)):
+        time.sleep(0.5)
+        try:
+            print(trashchecking(get_members(groupswithouttuples[i])))
+            con = sqlite3.connect("base.db")
+            cur = con.cursor()
+            cur.execute("UPDATE groups SET banned_count = (?) WHERE group_id = (?)", (trashchecking(get_members(groupswithouttuples[i])), groupswithouttuples[i]))
+            con.commit()
+            con.close()
+        except Exception as e:
+            if str(e).find('Access denied') == -1:
+                while True:
+                    try:
+                        time.sleep(0.5)
+                        con = sqlite3.connect("base.db")
+                        cur = con.cursor()
+                        cur.execute("UPDATE groups SET banned_count = (?) WHERE group_id = (?)",(trashchecking(get_members(groupswithouttuples[i])), groupswithouttuples[i]))
+                        con.commit()
+                        con.close()
+                    except Exception as r:
+                        print(r)
+                        time.sleep(10)
+                    else:
+                        break
+            else:
+                print(e)
+
+
+'''
+    for i in range(len(dividedlists)):
+        dividedlists[i] = vk_api.groups.getById(group_ids=",".join(dividedlists[i]), v=5.131, fields="members_count,can_post,activity,status,verified,can_create_topic,can_message,can_upload_doc,can_upload_video,has_photo,wall")
+        time.sleep(0.3)
+        for k in range(len(dividedlists[i])):
+            try:
+                con = sqlite3.connect("base.db")
+                cur = con.cursor()
+                cur.execute("UPDATE groups SET can_create_topic = (?) WHERE group_id = (?)", (dividedlists[i][k]['can_create_topic'],dividedlists[i][k]['screen_name']))
+                con.commit()
+                con.close()
+            except:
+                print('нет количества участников '+ dividedlists[i][k]['screen_name'])
+    print(len(trashcounter))
+
+    for i in alphabet:
         try:
             time.sleep(0.3)
             tempgroups = grabgroups(i)
@@ -149,3 +262,4 @@ if __name__ == "__main__":
             groups = groups + tempgroups
             words = list([i]) * len(tempgroups)
             dbinput(words, tempgroups)
+'''
