@@ -167,15 +167,22 @@ def dbinputaboutgroups(word, groupsforkey):
     con.commit()
     con.close()
 
-def trashchecking(groupforcheckingtrash):
+def trashchecking(groupforcheckingtrash, groupname):
     trashcounter = 0
+    yaroslavlcounter = 0
     for i in range(len(groupforcheckingtrash)):
         try:
             if groupforcheckingtrash[i]['deactivated'] == 'banned':
                 trashcounter += 1
         except:
             pass
-    return trashcounter
+        try:
+            if groupforcheckingtrash[i]['city']['title'] == 'Ярославль':
+                yaroslavlcounter += 1
+        except:
+            pass
+    return trashcounter, yaroslavlcounter, groupname
+
 
 alphabet = '123456789абвгдеёжзийклмнопрстуфхцчшщъыьэюяabcdefghijklmnopqrstuvwxyz'
 endict = enter_en_dict()
@@ -204,20 +211,19 @@ if __name__ == "__main__":
     for i in range(len(groupswithouttuples)):
         time.sleep(0.5)
         try:
-            print(trashchecking(get_members(groupswithouttuples[i])))
             con = sqlite3.connect("base.db")
             cur = con.cursor()
-            cur.execute("UPDATE groups SET banned_count = (?) WHERE group_id = (?)", (trashchecking(get_members(groupswithouttuples[i])), groupswithouttuples[i]))
+            cur.execute("UPDATE groups SET banned_count = (?), from_yaroslavl = (?) WHERE group_id = (?)", (trashchecking(get_members(groupswithouttuples[i]), groupswithouttuples[i])))
             con.commit()
             con.close()
         except Exception as e:
-            if str(e).find('Access denied') == -1:
+            if str(e).find('Access') == -1 and str(e).find('Invalid') == -1:
                 while True:
                     try:
                         time.sleep(0.5)
                         con = sqlite3.connect("base.db")
                         cur = con.cursor()
-                        cur.execute("UPDATE groups SET banned_count = (?) WHERE group_id = (?)",(trashchecking(get_members(groupswithouttuples[i])), groupswithouttuples[i]))
+                        cur.execute("UPDATE groups SET banned_count = (?), from_yaroslavl = (?) WHERE group_id = (?)",(trashchecking(get_members(groupswithouttuples[i]), groupswithouttuples[i])))
                         con.commit()
                         con.close()
                     except Exception as r:
