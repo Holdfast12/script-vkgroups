@@ -60,6 +60,13 @@ def dbselectunical():
     groups.extend(cur.fetchall())
     con.close()
 
+def dbselecalready():
+    con = sqlite3.connect("base.db")
+    cur = con.cursor()
+    cur.execute("SELECT group_id FROM groups WHERE from_yaroslavl NOT NULL AND banned_count NOT NULL")
+    groupsalready.extend(cur.fetchall())
+    con.close()
+
 def dbinsertunical(idgroups):
     con = sqlite3.connect("base.db")
     cur = con.cursor()
@@ -200,14 +207,18 @@ if __name__ == "__main__":
     #(vk_api.users.get(user_id=295872229))
 
     groups = []
+    groupsalready = []
     vkusers = []
     groupswithouttuples = []
-
+    groupsalreadywithouttuples = []
 
     dbselectunical()
+    dbselecalready()
     groupswithouttuples = [x[0] for x in groups]
-    dividedlists = getaboutgroups(groupswithouttuples)
-    membersofgroup = get_members('whitehousewot')
+    groupsalreadywithouttuples = [x[0] for x in groupsalready]
+    groupswithouttuples = list(filter(lambda x: x not in groupsalreadywithouttuples, groupswithouttuples))
+    #dividedlists = getaboutgroups(groupswithouttuples)
+    #membersofgroup = get_members('whitehousewot')
     for i in range(len(groupswithouttuples)):
         time.sleep(0.5)
         try:
@@ -232,6 +243,28 @@ if __name__ == "__main__":
                     else:
                         break
             else:
+                if str(e).find('Access') != -1:
+                    time.sleep(0.5)
+                    con = sqlite3.connect("base.db")
+                    cur = con.cursor()
+                    cur.execute("UPDATE groups SET banned_count = 0, from_yaroslavl = 0 WHERE group_id = (?)",(groupswithouttuples[i],))
+                    con.commit()
+                    con.close()
+                if str(e).find('Invalid group id') != -1:
+                    try:
+                        time.sleep(0.5)
+                        con = sqlite3.connect("base.db")
+                        cur = con.cursor()
+                        cur.execute("UPDATE groups SET banned_count = (?), from_yaroslavl = (?) WHERE group_id = (?)",(trashchecking(get_members(groupswithouttuples[i][4:]), groupswithouttuples[i])))
+                        con.commit()
+                        con.close()
+                    except:
+                        time.sleep(0.5)
+                        con = sqlite3.connect("base.db")
+                        cur = con.cursor()
+                        cur.execute("UPDATE groups SET banned_count = -1, from_yaroslavl = -1 WHERE group_id = (?)",(groupswithouttuples[i],))
+                        con.commit()
+                        con.close()
                 print(e)
 
 
